@@ -80,3 +80,26 @@ SELECT post_id FROM posts ORDER BY embedding <=> $1 LIMIT 10;
 ```
 
 Wire each into `async keywordSearch(query)` and `async semanticSearch(query)` returning ranked `post_id` lists, then run your exact same metric code. The metrics do not change, only where the ranked lists come from.
+
+
+---
+
+## My Results
+
+| Query | Keyword rank | Semantic rank |
+|---|---|---|
+| my redis cache keeps showing old data | 8 | 1 |
+| how do I add semantic search to a table I already have | miss | 2 |
+| redis or memcached for caching | 1 | 2 |
+| why did my query get slower after I added an index | miss | 1 |
+| what does ACID actually guarantee | 2 | 1 |
+| how do I keep my postgres online while changing the schema | 6 | 3 |
+| my background jobs stop after every deploy | miss | 2 |
+| how do I let my database accept more writes per second | 4 | 1 |
+| sql or nosql for a new product | 1 | 3 |
+| why does my redis memory keep climbing | miss | 2 |
+| **Summary** | **MRR 0.30 · Recall@10 0.60** | **MRR 0.67 · Recall@10 1.00** |
+
+## Interpretation
+
+Semantic search is better overall on both metrics: its MRR is 0.67 versus 0.30 for keyword search, and its Recall@10 is 1.00 versus 0.60, so it always found the answer and usually ranked it at or near the top. Keyword search won only two queries, "redis or memcached for caching" (rank 1 vs 2) and "sql or nosql for a new product" (rank 1 vs 3); both contain the exact, rare terms (redis, memcached, sql, nosql) that also appear in the matching posts, so literal word matching works well. Semantic search won the rest, such as "my redis cache keeps showing old data", "why did my query get slower after I added an index" and "my background jobs stop after every deploy"; these describe symptoms or paraphrase the problem in words the posts don't use, and keyword search missed four of them entirely. A team would still keep keyword search because the two systems win on different queries, so combining them (a hybrid) can beat either one alone, and keyword search is cheap and precise for exact-term lookups.
